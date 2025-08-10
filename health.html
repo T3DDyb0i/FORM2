@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <title>แบบสอบถามสุขภาพ</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: sans-serif;
+      background-image: url('https://static.thairath.co.th/media/dFQROr7oWzulq5Fa4MRntIHsG5dFDezRv0i1vdvrl7NLOfbSpnrr6lS5ZGCnVxjC6D5.jpg');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+    }
+
+    .form-container {
+      background-color: rgba(255, 255, 255, 0.95);
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      max-width: 500px;
+      margin: 50px auto;
+    }
+
+    h2 {
+    text-align: center;
+    padding: 15px;
+    border: 2px solid #007bff;
+    border-radius: 8px;
+    background-color: #e9f5ff;
+    color: #007bff;
+    margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-top: 15px;
+    }
+
+    input[type="number"],
+    textarea {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+      box-sizing: border-box;
+    }
+
+    .error {
+      color: red;
+      font-size: 0.9em;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal-content {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      max-width: 400px;
+      text-align: center;
+    }
+
+    button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #0056b3;
+    }
+  </style>
+</head>
+<body>
+
+<div class="form-container">
+  <h2>แบบสอบถามสุขภาพ</h2>
+  <form id="healthForm">
+    <label>อายุ:
+      <input type="number" id="age">
+      <div class="error" id="ageError"></div>
+    </label>
+
+    <label>เพศ:
+      <input type="radio" name="gender" value="ชาย"> ชาย
+      <input type="radio" name="gender" value="หญิง"> หญิง
+      <div class="error" id="genderError"></div>
+    </label>
+
+    <label>น้ำหนัก (กก.):
+      <input type="number" id="weight">
+      <div class="error" id="weightError"></div>
+    </label>
+
+    <label>ส่วนสูง (ซม.):
+      <input type="number" id="height">
+      <div class="error" id="heightError"></div>
+    </label>
+
+    <label>
+      <input type="checkbox" id="hasDisease"> มีโรคประจำตัว
+    </label>
+
+    <div id="diseaseDetails" style="display:none;">
+      <label>กรุณาระบุ:
+        <textarea id="diseaseText"></textarea>
+        <div class="error" id="diseaseError"></div>
+      </label>
+    </div>
+
+    <button type="submit">ส่งข้อมูล</button>
+  </form>
+</div>
+
+<!-- Modal -->
+<div class="modal" id="resultModal">
+  <div class="modal-content">
+    <h3>ผลการประเมินสุขภาพ</h3>
+    <p id="bmiResult"></p>
+    <button onclick="closeModal()">ปิด</button>
+  </div>
+</div>
+
+<script>
+  const form = document.getElementById('healthForm');
+  const hasDisease = document.getElementById('hasDisease');
+  const diseaseDetails = document.getElementById('diseaseDetails');
+
+  hasDisease.addEventListener('change', () => {
+    diseaseDetails.style.display = hasDisease.checked ? 'block' : 'none';
+  });
+
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    // Clear errors
+    document.querySelectorAll('.error').forEach(el => el.textContent = '');
+
+    let valid = true;
+    const age = parseInt(document.getElementById('age').value);
+    const gender = document.querySelector('input[name="gender"]:checked');
+    const weight = parseFloat(document.getElementById('weight').value);
+    const height = parseFloat(document.getElementById('height').value);
+    const diseaseText = document.getElementById('diseaseText').value;
+
+    if (isNaN(age) || age < 15 || age > 60) {
+      document.getElementById('ageError').textContent = 'อายุต้องอยู่ระหว่าง 15–60 ปี';
+      valid = false;
+    }
+
+    if (!gender) {
+      document.getElementById('genderError').textContent = 'กรุณาเลือกเพศ';
+      valid = false;
+    }
+
+    if (isNaN(weight) || weight <= 0) {
+      document.getElementById('weightError').textContent = 'น้ำหนักต้องเป็นค่าบวก';
+      valid = false;
+    }
+
+    if (isNaN(height) || height <= 0) {
+      document.getElementById('heightError').textContent = 'ส่วนสูงต้องเป็นค่าบวก';
+      valid = false;
+    }
+
+    if (hasDisease.checked && diseaseText.trim() === '') {
+      document.getElementById('diseaseError').textContent = 'กรุณาระบุโรคประจำตัว';
+      valid = false;
+    }
+
+    if (!valid) return;
+
+    // Calculate BMI
+    const bmi = weight / Math.pow(height / 100, 2);
+    let category = '';
+    if (bmi < 18.5) category = 'น้ำหนักน้อย';
+    else if (bmi < 25) category = 'ปกติ';
+    else if (bmi < 30) category = 'น้ำหนักเกิน';
+    else category = 'อ้วน';
+
+    document.getElementById('bmiResult').textContent = `BMI ของคุณคือ ${bmi.toFixed(2)} (${category})`;
+    document.getElementById('resultModal').style.display = 'flex';
+  });
+
+  function closeModal() {
+    document.getElementById('resultModal').style.display = 'none';
+  }
+</script>
+
+</body>
+</html>
